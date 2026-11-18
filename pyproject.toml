@@ -1,0 +1,51 @@
+[project]
+name = "av2-replay"
+version = "0.1.0"
+description = "Mini perception replay & recompute pipeline on Argoverse 2: logs -> Parquet/MCAP -> Ray recompute -> auditable metrics -> Foxglove"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = { text = "MIT" }
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "pyarrow>=16",
+    "torch>=2.7",
+    "ray>=2.40",
+    "mcap>=1.2",
+    "mcap-protobuf-support>=0.5",
+    "foxglove-schemas-protobuf>=0.3",
+    "protobuf>=4.25",
+    "scipy>=1.12",
+    "shapely>=2.0",
+    "boto3>=1.34",
+    "pyyaml>=6",
+    "matplotlib>=3.8",
+    "tqdm>=4.66",
+    "tabulate>=0.10.0",
+    "psutil>=7.2.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+replay = "replay.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/replay"]
+
+[tool.uv]
+# Blackwell (RTX 50xx) needs CUDA 12.8 wheels; they also run on CPU-only machines.
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu128", marker = "sys_platform == 'win32' or sys_platform == 'linux'" },
+]

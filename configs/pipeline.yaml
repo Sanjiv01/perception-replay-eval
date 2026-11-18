@@ -1,0 +1,94 @@
+# Single source of truth for a pipeline run. Every artifact records the hash of this file.
+dataset:
+  name: argoverse2-sensor
+  split: val
+  s3_bucket: argoverse
+  s3_prefix: datasets/av2/sensor
+  # Four val logs picked with `replay scout` for a mix of traffic, pedestrians, cyclists and
+  # large vehicles. Change this list to replay other scenes.
+  logs:
+    - 04994d08-156c-3018-9717-ba0e29be8153   # 95 vehicles, 67 pedestrians
+    - 0b86f508-5df9-4a46-bc59-5b9536dbde9f   # 116 vehicles, 5 cyclists, 11 large vehicles
+    - 280269f9-6111-311d-b351-ce9f63f88c81   # 107 pedestrians (dense crosswalks)
+    - 2e3f2ae7-9ab9-3aef-a3ce-a0a97a0cb1ab   # mixed: 84 vehicles, 22 peds, 3 cyclists
+  camera: ring_front_center   # one camera is logged into MCAP for visual review
+  max_frames: null            # e.g. 60 for a quick smoke run
+
+paths:
+  raw: data/raw               # verbatim AV2 files (feather/jpg), untouched
+  lake: data/lake             # Parquet tables written by ingest / recompute / evaluate
+  mcap: data/mcap
+  reports: reports
+
+recompute:
+  # Host-safe defaults: use ~90% of the machine, keep 10% headroom. Tasks are admitted only while
+  # >=10% RAM is free and the GPU is under max_gpu_temp_c. Results don't depend on these knobs.
+  # device: cpu is the default because concurrent CUDA contexts crashed the dev laptop's GPU driver
+  # (bugcheck 0x116 VIDEO_TDR_FAILURE). On a workstation/server set device: cuda.
+  device: cpu                 # cpu | cuda
+  num_gpus_per_task: 0.5      # only used when device: cuda (2 scenes share one GPU)
+  num_cpus_per_task: 6
+  max_cpus: null              # null = 90% of logical cores
+  torch_threads: 6
+  object_store_mb: 1024
+  min_free_ram_frac: 0.10
+  max_gpu_temp_c: 85
+
+# Model versions under comparison. Same public checkpoint, different shipped inference recipes,
+# which is how most real "model version" bumps reach a replay farm.
+models:
+  pp-kitti-v1:
+    checkpoint_url: https://github.com/zhulf0804/PointPillars/raw/main/pretrained/epoch_160.pth
+    checkpoint_sha256: null   # filled on first download and checked afterwards
+    sensor_height_m: 1.73     # KITTI velodyne height; AV2 ego frame has z=0 at ground
+    intensity_scale: 0.00392156862  # AV2 intensity is 0..255, KITTI reflectance is 0..1
+    rotations_deg: [0]        # single forward pass: model only sees x>0 (front 90deg wedge)
+    num_sweeps: 1
+    score_thr: 0.1
+  pp-kitti-v2:
+    checkpoint_url: https://github.com/zhulf0804/PointPillars/raw/main/pretrained/epoch_160.pth
+    checkpoint_sha256: null
+    sensor_height_m: 1.73
+    intensity_scale: 0.00392156862
+    rotations_deg: [0, 90, 180, 270]   # 360deg coverage via rotated passes + global NMS
+    num_sweeps: 3                      # ego-motion-compensated sweep accumulation for density
+    score_thr: 0.1
+
+# Ablations isolate each change in v2. Not part of `replay all`; run with
+#   replay recompute --models pp-kitti-v2-rot pp-kitti-v2-sweeps && replay evaluate --models ...
+ablations:
+  pp-kitti-v2-rot:            # v2's 360deg rotated passes only
+    checkpoint_url: https://github.com/zhulf0804/PointPillars/raw/main/pretrained/epoch_160.pth
+    checkpoint_sha256: null
+    sensor_height_m: 1.73
+    intensity_scale: 0.00392156862
+    rotations_deg: [0, 90, 180, 270]
+    num_sweeps: 1
+    score_thr: 0.1
+  pp-kitti-v2-sweeps:         # v2's 3-sweep accumulation only
+    checkpoint_url: https://github.com/zhulf0804/PointPillars/raw/main/pretrained/epoch_160.pth
+    checkpoint_sha256: null
+    sensor_height_m: 1.73
+    intensity_scale: 0.00392156862
+    rotations_deg: [0]
+    num_sweeps: 3
+    score_thr: 0.1
+
+evaluation:
+  # AV2 categories -> evaluated classes (KITTI-trained model only knows these three)
+  class_map:
+    VEHICLE: [REGULAR_VEHICLE]
+    PEDESTRIAN: [PEDESTRIAN]
+    CYCLIST: [BICYCLIST, MOTORCYCLIST]
+  max_range_m: 50.0
+  roi_filter: true            # as in the official AV2 eval: drop GT + preds outside drivable area + 5 m
+  roi_dilation_m: 5.0
+  distance_buckets_m: [0, 20, 35, 50]
+  match_thresholds_m: [0.5, 1.0, 2.0, 4.0]   # AV2-style BEV center-distance matching
+  tp_threshold_m: 2.0                         # threshold used for per-frame TP/FP/FN + errors
+  min_gt_interior_points: 1                   # GT with 0 lidar returns is not detectable
+
+tracking:
+  max_match_dist_m: 2.5
+  min_hits: 2
+  max_age: 3
