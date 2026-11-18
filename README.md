@@ -1,5 +1,15 @@
 # av2-replay: a mini perception replay & recompute pipeline
 
+<p align="center">
+  <a href="reports/media/foxglove_review.mp4">
+    <img src="reports/media/foxglove_review.gif" alt="Foxglove review of AV2 scene 2e3f2ae7: v1 vs v2 detections over lidar, top-down. Green/blue = TP, red = FP, orange = missed GT, grey = not scored; clicking a box shows its gt_id / pred_id and FP/TP status" width="100%">
+  </a>
+  <br>
+  <sub>Foxglove replay of AV2 scene <code>2e3f2ae7</code>: <b>v1</b> (forward-only) misses whole rows of cars beside and behind the ego (orange),
+  then <b>v2</b> (360°) finds them but adds false positives (red). Clicking a box shows the <code>gt_id</code> / <code>pred_id</code> and
+  <code>status</code> that key into <code>matches.parquet</code>. <a href="reports/media/foxglove_review.mp4">Full-quality MP4</a>.</sub>
+</p>
+
 Take logged driving data, re-run a detector over it as a recompute job, and get **auditable**
 metrics and a **Foxglove-viewable MCAP** out the other end. It's the replay → recompute → evaluate →
 visualize loop, small enough to read in an afternoon.
