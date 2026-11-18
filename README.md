@@ -1,4 +1,4 @@
-# av2-replay: a mini perception replay & recompute pipeline
+# perception-replay-eval: replay driving logs, recompute perception, evaluate regressions
 
 <p align="center">
   <a href="reports/media/foxglove_review.mp4">
@@ -37,7 +37,7 @@ visualize loop, small enough to read in an afternoon.
 Requires [uv](https://docs.astral.sh/uv/) and `ffmpeg` only for the optional video. About 1 GB download and 3 GB disk.
 
 ```bash
-git clone https://github.com/Sanjiv01/av2-replay && cd av2-replay
+git clone https://github.com/Sanjiv01/perception-replay-eval && cd perception-replay-eval
 uv run replay all
 ```
 

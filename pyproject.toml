@@ -1,5 +1,5 @@
 [project]
-name = "av2-replay"
+name = "perception-replay-eval"
 version = "0.1.0"
 description = "Mini perception replay & recompute pipeline on Argoverse 2: logs -> Parquet/MCAP -> Ray recompute -> auditable metrics -> Foxglove"
 readme = "README.md"

@@ -43,7 +43,7 @@ def main():
     head = reg.split("## Headline")[1].split("## What got worse")[0].strip().splitlines()
     worse = reg.split("## What got worse")[1].split("## What got better")[0].strip().splitlines()[:7]
     cards = [
-        ("av2-replay", "Mini perception replay & recompute pipeline\n\n"
+        ("perception-replay-eval", "Replay driving logs, recompute perception, evaluate regressions\n\n"
          "Argoverse 2 logs  ->  Parquet lake + MCAP\n"
          "Ray recompute: PointPillars (KITTI ckpt) x 2 model versions\n"
          "Per-frame / class / distance metrics, every number traceable to frame + box\n"
