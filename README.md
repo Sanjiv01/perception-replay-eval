@@ -55,7 +55,19 @@ stable CUDA GPU, set `recompute.device: cuda` (results match the CPU run; it's o
 
 ## Look at it in Foxglove
 
-Open `data/mcap/<log_id>.mcap` in [Foxglove](https://foxglove.dev) and add a **3D** panel (fixed frame `base_link`):
+**Screen recording:** [`reports/media/foxglove_review.mp4`](reports/media/foxglove_review.mp4) (50 s, Foxglove web app):
+v1 top-down with missed rows behind the ego, click-through to a GT box's `gt_id`, then v2 with a false positive's
+`pred_id` / `status: FP`.
+
+Open `data/mcap/<log_id>.mcap` in the Foxglove desktop app, or stream it into the web app without uploading anything:
+
+```bash
+uv run python scripts/serve_mcap.py data/mcap 8765      # localhost-only, CORS + HTTP Range
+# then open: https://app.foxglove.dev/<your-org>/view?ds=remote-file&ds.url=http%3A%2F%2F127.0.0.1%3A8765%2F<log_id>.mcap
+# (Chrome asks once to allow "local network access" for app.foxglove.dev)
+```
+
+Add a **3D** panel (display frame `base_link`, 2D top-down, distance ≈ 75 m):
 
 | topic | what | colour |
 |---|---|---|
@@ -74,6 +86,7 @@ primary key of a row in `matches.parquet`.
 * `reports/regression_pp-kitti-v1_vs_pp-kitti-v2.md`: what got worse and better, box-level flips, worst frames.
 * `docs/DISCREPANCY.md`: one surprising number traced end to end, written for a model owner.
 * `docs/UX_BACKLOG.md`: tooling gaps hit while building this, as backlog items.
+* `reports/media/foxglove_review.mp4`: Foxglove screen recording (v1 vs v2 overlays, box metadata).
 * `reports/media/demo.mp4`: 40 s walkthrough (pipeline → regression → trace → root cause → BEV playback).
 
 ## Results on the 4 committed scenes
